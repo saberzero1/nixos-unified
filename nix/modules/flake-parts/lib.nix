@@ -63,7 +63,7 @@ let
     # Required when using the DetSys installer
     # cf. https://github.com/srid/nixos-unified/issues/52
     nix-darwin = {
-      nix.useDaemon = false; # Required on multi-user Nix install
+    #   nix.useDaemon = true; # Required on multi-user Nix install
     };
   };
 in
