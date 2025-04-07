@@ -40,36 +40,32 @@ def parseFlakeOutputRef [ spec: string ] {
 def main [
   ref: string = "localhost", # Hostname or username (if containing `@`) to activate
   --dry-run # Dry run (don't actually activate)
-  --impure # Impure
-  --accept-flake-config # Accept flake config
 ] {
     let spec = parseFlakeOutputRef $ref
     if $spec.user != null {
-        activate_home $spec.user $spec.host --dry-run=$dry_run --impure=$impure --accept-dry-run=$accept_flake_config
+        activate_home $spec.user $spec.host --dry-run=$dry_run
     } else {
         let host = if ($spec.host | is-empty) { $CURRENT_HOSTNAME } else { $spec.host }
         let hostData = get_host_data $host
-        activate_system $hostData --dry-run=$dry_run --impure=$impure --accept-dry-run=$accept_flake_config
+        activate_system $hostData --dry-run=$dry_run
     }
 }
 
-def activate_home [ user: string, host: string, --dry-run, --impure, --accept-flake-config ] {
+def activate_home [ user: string, host: string, --dry-run ] {
     if (($host | is-empty) or ($host == $CURRENT_HOSTNAME)) {
-        activate_home_local $user $host --dry-run=$dry_run --impure=$impure --accept-dry-run=$accept_flake_config
+        activate_home_local $user $host --dry-run=$dry_run
     } else {
         log error $"Remote activation not yet supported for homeConfigurations"
         exit 1
     }
 }
 
-def activate_home_local [ user: string, host: string, --dry-run, --impure, --accept-flake-config ] {
+def activate_home_local [ user: string, host: string, --dry-run ] {
     let name = $"($user)" + (if ($host | is-empty) { "" } else { "@" + $host })
     let extraArgs = if $dry_run { ["--dry-run"] } else { [] }
-    let impureArgs = if $impure { ["--impure"] } else { [] }
-    let flakeConfigArgs = if $accept_flake_config { ["--accept-flake-config"] } else { [] }
     log info $"Activating home configuration ($name) (ansi purple)locally(ansi reset)"
-    log info $"(ansi blue_bold)>>>(ansi reset) home-manager switch ($extraArgs | str join) --flake ($data.cleanFlake)#($name) ($impureArgs | str join) ($flakeConfigArgs | str join)"
-    home-manager switch ...$extraArgs ...$impureArgs ...$flakeConfigArgs -b (date now | format date "nixos-unified.%Y-%m-%d-%H:%M:%S.bak") --flake $"($data.cleanFlake)#($name)"
+    log info $"(ansi blue_bold)>>>(ansi reset) home-manager switch ($extraArgs | str join) --flake ($data.cleanFlake)#($name) --impure --accept-flake-config"
+    home-manager switch ...$extraArgs -b (date now | format date "nixos-unified.%Y-%m-%d-%H:%M:%S.bak") --flake $"($data.cleanFlake)#($name) --impure --accept-flake-config"
 }
 
 def activate_system [ hostData: record, --dry-run=false ] {
@@ -89,17 +85,17 @@ def activate_system [ hostData: record, --dry-run=false ] {
     }
 }
 
-def activate_system_local [ hostData: record, --dry-run=false --impure, --accept-flake-config ] {
+def activate_system_local [ hostData: record, --dry-run=false ] {
     log info $"Activating (ansi purple)locally(ansi reset)"
     let darwin = $hostData.outputs.system in ["aarch64-darwin" "x86_64-darwin"]
     if $darwin {
         let subcommand = if $dry_run { "build" } else { "switch" }
-        log info $"(ansi blue_bold)>>>(ansi reset) darwin-rebuild ($subcommand) --flake ($hostData.flake) ($hostData.outputs.nixArgs | str join) ($impureArgs | str join) ($flakeConfigArgs | str join)"
-        darwin-rebuild $subcommand --flake $hostData.flake ...$hostData.outputs.nixArgs ($impureArgs | str join) ($flakeConfigArgs | str join)
+        log info $"(ansi blue_bold)>>>(ansi reset) darwin-rebuild ($subcommand) --flake ($hostData.flake) ($hostData.outputs.nixArgs | str join) --impure --accept-flake-config"
+        darwin-rebuild $subcommand --flake $hostData.flake ...$hostData.outputs.nixArgs --impure --accept-flake-config
     } else {
         let subcommand = if $dry_run { "dry-activate" } else { "switch" }
-        log info $"(ansi blue_bold)>>>(ansi reset) nixos-rebuild ($subcommand) --flake ($hostData.flake) ($hostData.outputs.nixArgs | str join) --use-remote-sudo ($impureArgs | str join) ($flakeConfigArgs | str join) "
-        nixos-rebuild $subcommand --flake $hostData.flake ...$hostData.outputs.nixArgs --use-remote-sudo ($impureArgs | str join) ($flakeConfigArgs | str join)
+        log info $"(ansi blue_bold)>>>(ansi reset) nixos-rebuild ($subcommand) --flake ($hostData.flake) ($hostData.outputs.nixArgs | str join) --use-remote-sudo --impure --accept-flake-config"
+        nixos-rebuild $subcommand --flake $hostData.flake ...$hostData.outputs.nixArgs --use-remote-sudo --impure --accept-flake-config
     }
 }
 
@@ -113,8 +109,8 @@ def activate_system_remote_ssh [ hostData: record, --dry-run=false ] {
     }
 
     # We re-run this activation script, but on the remote host (where it will invoke activate_system_local).
-    log info $'(ansi blue_bold)>>>(ansi reset) ssh -t ($hostData.sshTarget) nix --extra-experimental-features '"nix-command flakes"' run ($hostData.outputs.nixArgs | str join) $"($data.cleanFlake)#activate" -- ($hostData.host) --dry-run=($dry_run)'
-    ssh -t $hostData.sshTarget nix --extra-experimental-features '"nix-command flakes"' run ...$hostData.outputs.nixArgs $"($data.cleanFlake)#activate" -- ($hostData.host) --dry-run=($dry_run)
+    log info $'(ansi blue_bold)>>>(ansi reset) ssh -t ($hostData.sshTarget) nix --extra-experimental-features '"nix-command flakes"' run ($hostData.outputs.nixArgs | str join) $"($data.cleanFlake)#activate" -- ($hostData.host) --dry-run=($dry_run) --impure --accept-flake-config'
+    ssh -t $hostData.sshTarget nix --extra-experimental-features '"nix-command flakes"' run ...$hostData.outputs.nixArgs $"($data.cleanFlake)#activate" -- ($hostData.host) --dry-run=($dry_run) --impure --accept-flake-config
 }
 
 def nix_copy [ src: string dst: string ] {
