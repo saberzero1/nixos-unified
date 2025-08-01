@@ -33,17 +33,17 @@
                     # https://github.com/nix-community/home-manager/issues/4026#issuecomment-1565487545
                     users.users.${myUserName}.home = "/Users/${myUserName}";
 
-                    security.pam.enableSudoTouchIdAuth = true;
+                    security.pam.services.sudo_local.touchIdAuth = true;
 
                     # Used for backwards compatibility, please read the changelog before changing.
                     # $ darwin-rebuild changelog
-                    system.stateVersion = 4;
+                    system.stateVersion = 6;
                   })
                   # Setup home-manager in nix-darwin config
                   {
                     home-manager.users.${myUserName} = {
                       imports = [ self.homeModules.default ];
-                      home.stateVersion = "22.11";
+                      home.stateVersion = "24.11";
                     };
                   }
                 ];

@@ -90,8 +90,8 @@ def activate_system_local [ hostData: record, --dry-run=false ] {
     let darwin = $hostData.outputs.system in ["aarch64-darwin" "x86_64-darwin"]
     if $darwin {
         let subcommand = if $dry_run { "build" } else { "switch" }
-        log info $"(ansi blue_bold)>>>(ansi reset) darwin-rebuild ($subcommand) --flake ($hostData.flake) ($hostData.outputs.nixArgs | str join) --impure --accept-flake-config"
-        darwin-rebuild $subcommand --flake $hostData.flake ...$hostData.outputs.nixArgs --impure
+        log info $"(ansi blue_bold)>>>(ansi reset) sudo darwin-rebuild ($subcommand) --flake ($hostData.flake) ($hostData.outputs.nixArgs | str join) --impure --accept-flake-config"
+        sudo darwin-rebuild $subcommand --flake $hostData.flake ...$hostData.outputs.nixArgs --impure --accept-flake-config
     } else {
         let subcommand = if $dry_run { "dry-activate" } else { "switch" }
         log info $"(ansi blue_bold)>>>(ansi reset) nixos-rebuild ($subcommand) --flake ($hostData.flake) ($hostData.outputs.nixArgs | str join) --use-remote-sudo --impure --accept-flake-config"
@@ -114,6 +114,6 @@ def activate_system_remote_ssh [ hostData: record, --dry-run=false ] {
 }
 
 def nix_copy [ src: string dst: string ] {
-    log info $"(ansi blue_bold)>>>(ansi reset) nix copy ($src) --to ($dst)"
-    nix copy $src --to $dst
+    log info $"(ansi blue_bold)>>>(ansi reset) nix --extra-experimental-features \"nix-command flakes\" copy ($src) --to ($dst)"
+    nix --extra-experimental-features "nix-command flakes" copy $src --to $dst
 }
