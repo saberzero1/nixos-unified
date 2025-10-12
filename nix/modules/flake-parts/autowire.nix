@@ -28,14 +28,14 @@
                 null
             ))
           ] else { };
-      homeConfigDir = (
+      homeConfigDir = 
         if pkgs.stdenv.isLinux then
           "${self}/configurations/home/nixos"
         else if pkgs.stdenv.isDarwin then
           "${self}/configurations/home/darwin"
         else
           "${self}/configurations/home"
-      );
+      ;
     in
     {
       flake = {
