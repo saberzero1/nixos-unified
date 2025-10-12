@@ -1,4 +1,4 @@
-{ self, lib, ... }:
+{ self, lib, pkgs, ... }:
 {
   config =
     let
