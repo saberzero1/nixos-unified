@@ -28,6 +28,14 @@
                 null
             ))
           ] else { };
+      homeConfigDir = (
+        if pkgs.stdenv.isLinux then
+          "${self}/configurations/home/nixos"
+        else if pkgs.stdenv.isDarwin then
+          "${self}/configurations/home/darwin"
+        else
+          "${self}/configurations/home"
+      );
     in
     {
       flake = {
@@ -58,7 +66,7 @@
 
       perSystem = { pkgs, ... }: {
         legacyPackages.homeConfigurations =
-          forAllNixFiles "${self}/configurations/home"
+          forAllNixFiles homeConfigDir
             (fn: self.nixos-unified.lib.mkHomeConfiguration pkgs fn);
       };
     };
